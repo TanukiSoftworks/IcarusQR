@@ -1,0 +1,6 @@
+name = "icarusqr"
+main = "src/index.js"
+compatibility_date = "2026-06-01"
+
+# Serve static assets (logo, icons, etc.)
+assets = { directory = "./assets", browser_routing = { disabled = true } }
