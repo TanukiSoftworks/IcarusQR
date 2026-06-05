@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IcarusQR — Generador de Códigos QR</title>
+  <meta name="description" content="Genera códigos QR al instante. Procesamiento 100% local en tu dispositivo. Sin servidores, sin almacenamiento externo." />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --tanuki-light:   #B3E5FC;
+      --tanuki-medium:  #4FC3F7;
+      --tanuki-primary: #0288D1;
+      --tanuki-dark:    #01579B;
+      --tanuki-darker:  #004A7F;
+      --bg:             #f8fafc;
+      --surface:        #ffffff;
+      --border:         #e2e8f0;
+      --text:           #1e293b;
+      --text-dim:       #64748b;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Navigation ─────────────────────────────────────── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-inner {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand img {
+      width: 2rem;
+      height: 2rem;
+      object-fit: contain;
+    }
+
+    .brand span {
+      font-weight: 700;
+      font-size: 1.15rem;
+      color: var(--tanuki-dark);
+    }
+
+    .brand small {
+      font-weight: 400;
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      margin-left: 0.25rem;
+    }
+
+    /* ── Container ──────────────────────────────────────── */
+    main { max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+    .hero {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    .hero h1 {
+      font-size: 2.25rem;
+      font-weight: 800;
+      color: var(--tanuki-darker);
+      letter-spacing: -0.02em;
+    }
+
+    .hero p {
+      font-size: 1.05rem;
+      color: var(--text-dim);
+      max-width: 560px;
+      margin: 0.5rem auto 0;
+    }
+
+    /* ── Card ───────────────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      padding: 2rem;
+      max-width: 560px;
+      margin: 0 auto;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+
+    .card label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-dim);
+      margin-bottom: 0.35rem;
+    }
+
+    .card input[type="text"],
+    .card input[type="url"] {
+      width: 100%;
+      padding: 0.7rem 0.9rem;
+      border: 1.5px solid var(--border);
+      border-radius: 0.6rem;
+      font-size: 0.95rem;
+      color: var(--text);
+      background: #fff;
+      transition: border 0.2s;
+      outline: none;
+    }
+
+    .card input:focus {
+      border-color: var(--tanuki-primary);
+      box-shadow: 0 0 0 3px rgba(2,136,209,0.1);
+    }
+
+    .input-group { margin-bottom: 1.25rem; }
+
+    /* ── File upload ────────────────────────────────────── */
+    .upload-area {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.7rem 0.9rem;
+      border: 1.5px dashed var(--border);
+      border-radius: 0.6rem;
+      cursor: pointer;
+      transition: border 0.2s, background 0.2s;
+    }
+
+    .upload-area:hover { border-color: var(--tanuki-medium); background: #f0f9ff; }
+
+    .upload-area span {
+      font-size: 0.9rem;
+      color: var(--text-dim);
+    }
+
+    .upload-area .filename {
+      color: var(--tanuki-primary);
+      font-weight: 500;
+    }
+
+    .upload-area input[type="file"] { display: none; }
+
+    .upload-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    /* ── Buttons ────────────────────────────────────────── */
+    .btn {
+      padding: 0.65rem 1.4rem;
+      border: none;
+      border-radius: 0.6rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, opacity 0.2s;
+    }
+
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .btn-primary {
+      background: var(--tanuki-primary);
+      color: #fff;
+    }
+
+    .btn-primary:hover:not(:disabled) { background: var(--tanuki-dark); }
+
+    .btn-secondary {
+      background: #f1f5f9;
+      color: var(--text);
+    }
+
+    .btn-secondary:hover { background: #e2e8f0; }
+
+    .btn-success {
+      background: #16a34a;
+      color: #fff;
+    }
+
+    .btn-success:hover { background: #15803d; }
+
+    .btn-ghost {
+      background: transparent;
+      color: #dc2626;
+      font-size: 0.8rem;
+      padding: 0.25rem 0.5rem;
+    }
+
+    .btn-ghost:hover { color: #b91c1c; }
+
+    .flex-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 1.25rem;
+    }
+
+    .flex-row .btn { flex: 1; }
+
+    /* ── QR Output ──────────────────────────────────────── */
+    .qr-output {
+      display: none;
+      margin-top: 1.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      text-align: center;
+    }
+
+    .qr-output.visible { display: block; }
+
+    #qrcode {
+      display: inline-block;
+      position: relative;
+      background: #fff;
+      padding: 1rem;
+      border-radius: 0.75rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      border: 1px solid var(--border);
+    }
+
+    #qrcode canvas { display: block; }
+
+    #qrcode .logo-overlay {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 48px; height: 48px;
+      background: #fff;
+      border-radius: 8px;
+      padding: 4px;
+      box-shadow: 0 0 0 3px #fff;
+      pointer-events: none;
+    }
+
+    #qrcode .logo-overlay img {
+      width: 100%; height: 100%;
+      object-fit: contain;
+    }
+
+    .qr-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      justify-content: center;
+    }
+
+    .qr-actions .btn { flex: 0 1 auto; }
+
+    /* ── Disclaimer ─────────────────────────────────────── */
+    .disclaimer {
+      margin-top: 1.5rem;
+      padding: 1rem 1.25rem;
+      background: #f1f5f9;
+      border-radius: 0.75rem;
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      line-height: 1.5;
+      max-width: 560px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .disclaimer strong { color: var(--text); }
+
+    /* ── Footer ─────────────────────────────────────────── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2rem 1.5rem;
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--text-dim);
+    }
+
+    footer a { color: var(--tanuki-primary); text-decoration: none; }
+
+    /* ── Responsive ─────────────────────────────────────── */
+    @media (max-width: 600px) {
+      .hero h1 { font-size: 1.6rem; }
+      .card { padding: 1.25rem; }
+      .flex-row { flex-direction: column; }
+      .qr-actions { flex-direction: column; align-items: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav>
+    <div class="nav-inner">
+      <div class="brand">
+        <img src="assets/logo.png" alt="Tanuki Softworks" />
+        <span>IcarusQR</span>
+        <small>by Tanuki Softworks</small>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <main>
+    <div class="hero">
+      <h1>Generador de Códigos QR</h1>
+      <p>Ingresa un texto o enlace, o sube una imagen para personalizar tu código QR.</p>
+    </div>
+
+    <div class="card">
+      <!-- Text input -->
+      <div class="input-group">
+        <label for="text-input">Texto o enlace</label>
+        <input type="text" id="text-input" placeholder="https:// o texto libre" autofocus />
+      </div>
+
+      <!-- Logo upload -->
+      <div class="input-group">
+        <label>Logo personalizado <small style="font-weight:400;color:var(--text-dim)">(opcional)</small></label>
+        <div class="upload-area" id="upload-area">
+          <span id="upload-label">Haz clic para seleccionar una imagen (PNG, SVG)</span>
+          <input type="file" id="logo-input" accept="image/png,image/svg+xml,image/jpeg" />
+        </div>
+        <div class="upload-actions" id="upload-actions" style="display:none;">
+          <span class="filename" id="filename-display"></span>
+          <button class="btn-ghost" id="remove-logo-btn">Quitar</button>
+        </div>
+      </div>
+
+      <!-- Buttons -->
+      <div class="flex-row">
+        <button class="btn btn-primary" id="generate-btn" disabled>Generar QR</button>
+        <button class="btn btn-secondary" id="clear-btn">Limpiar</button>
+      </div>
+
+      <!-- QR output -->
+      <div class="qr-output" id="qr-output">
+        <div id="qrcode"></div>
+        <div class="qr-actions">
+          <button class="btn btn-success" id="download-btn">Descargar PNG</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Legal disclaimer -->
+    <div class="disclaimer">
+      <strong>Aviso de privacidad.</strong> IcarusQR procesa toda la información
+      <strong>exclusivamente en tu dispositivo</strong>. No se envía, almacena ni
+      comparte ningún dato con servidores externos. La imagen que subas solo se
+      usa para superponerla en el código QR y no abandona tu navegador en ningún
+      momento. Puedes usar esta herramienta sin conexión a internet después de la
+      primera carga.
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <p>&copy; 2026 <a href="https://tanukisoftworks.com">Tanuki Softworks</a>. Todos los derechos reservados.</p>
+    <p style="margin-top:0.25rem;">IcarusQR v1.0</p>
+  </footer>
+
+  <!-- QRCode.js from CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <script>
+    (() => {
+      const textInput     = document.getElementById('text-input');
+      const generateBtn   = document.getElementById('generate-btn');
+      const clearBtn      = document.getElementById('clear-btn');
+      const qrOutput      = document.getElementById('qr-output');
+      const qrDiv         = document.getElementById('qrcode');
+      const downloadBtn   = document.getElementById('download-btn');
+      const logoInput     = document.getElementById('logo-input');
+      const uploadArea    = document.getElementById('upload-area');
+      const uploadLabel   = document.getElementById('upload-label');
+      const uploadActions = document.getElementById('upload-actions');
+      const filenameSpan  = document.getElementById('filename-display');
+      const removeLogoBtn = document.getElementById('remove-logo-btn');
+
+      let currentQR   = null;
+      let logoDataURL = null;  // base64 of uploaded logo
+
+      // ── Enable generate on input ──────────────────────────
+      textInput.addEventListener('input', () => {
+        generateBtn.disabled = textInput.value.trim().length === 0;
+      });
+
+      textInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !generateBtn.disabled) generate();
+      });
+
+      // ── Logo file upload ──────────────────────────────────
+      uploadArea.addEventListener('click', () => logoInput.click());
+
+      logoInput.addEventListener('change', () => {
+        const file = logoInput.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          logoDataURL = e.target.result;
+          uploadLabel.textContent = 'Cambiar imagen...';
+          filenameSpan.textContent = file.name;
+          uploadActions.style.display = 'flex';
+
+          // Regenerate QR with logo if QR exists
+          if (currentQR) generate();
+        };
+        reader.readAsDataURL(file);
+      });
+
+      removeLogoBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        logoDataURL = null;
+        logoInput.value = '';
+        uploadLabel.textContent = 'Haz clic para seleccionar una imagen (PNG, SVG)';
+        uploadActions.style.display = 'none';
+        if (currentQR) generate();
+      });
+
+      // ── Generate QR ────────────────────────────────────────
+      function generate() {
+        const text = textInput.value.trim();
+        if (!text) return;
+
+        // Clear previous
+        qrDiv.innerHTML = '';
+        if (currentQR) { currentQR.clear(); currentQR = null; }
+
+        currentQR = new QRCode(qrDiv, {
+          text,
+          width: 280,
+          height: 280,
+          colorDark: '#1e293b',
+          colorLight: '#ffffff',
+          correctLevel: QRCode.CorrectLevel.H
+        });
+
+        // Overlay logo if present (after QR canvas renders)
+        if (logoDataURL) {
+          // Wait for canvas to render
+          setTimeout(() => {
+            const canvas = qrDiv.querySelector('canvas');
+            if (!canvas) return;
+
+            const ctx = canvas.getContext('2d');
+            const size = canvas.width;
+            const logoSize = size * 0.22;  // 22% of QR size
+            const x = (size - logoSize) / 2;
+            const y = (size - logoSize) / 2;
+
+            // White background for the logo
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.roundRect(x - 4, y - 4, logoSize + 8, logoSize + 8, 8);
+            ctx.fill();
+
+            // Draw the logo
+            const img = new Image();
+            img.onload = () => {
+              ctx.drawImage(img, x, y, logoSize, logoSize);
+            };
+            img.src = logoDataURL;
+          }, 100);
+        }
+
+        qrOutput.classList.add('visible');
+      }
+
+      // ── Clear ──────────────────────────────────────────────
+      function clearAll() {
+        textInput.value = '';
+        generateBtn.disabled = true;
+        qrOutput.classList.remove('visible');
+        qrDiv.innerHTML = '';
+        if (currentQR) { currentQR.clear(); currentQR = null; }
+        logoDataURL = null;
+        logoInput.value = '';
+        uploadLabel.textContent = 'Haz clic para seleccionar una imagen (PNG, SVG)';
+        uploadActions.style.display = 'none';
+        textInput.focus();
+      }
+
+      // ── Download ───────────────────────────────────────────
+      function download() {
+        const canvas = qrDiv.querySelector('canvas');
+        if (!canvas) return;
+
+        const link = document.createElement('a');
+        link.download = 'icarusqr.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      }
+
+      // ── Event listeners ────────────────────────────────────
+      generateBtn.addEventListener('click', generate);
+      clearBtn.addEventListener('click', clearAll);
+      downloadBtn.addEventListener('click', download);
+    })();
+  </script>
+</body>
+</html>
