@@ -1,39 +1,40 @@
 # IcarusQR
 
-Generador de códigos QR de Tanuki Softworks.
+Client-side QR code generator with custom image overlay support. Built for deployment on Cloudflare Pages and Workers.
 
-**Procesamiento 100% local.** Todo ocurre en el navegador del usuario.
-No se envían datos a servidores externos.
+All encoding, matrix calculation and image manipulation take place strictly in the user's browser runtime. No data is transmitted to, cached by, or processed on remote infrastructure.
 
-## Características
+### Capabilities
+- **Local Generation:** Generates standard QR codes (Model 2, Error Correction Level H) client-side via canvas.
+- **Center Overlay:** Embeds arbitrary logos (PNG, SVG, JPEG) onto the generated matrix with white protective padding.
+- **Zero Telemetry:** Operates fully offline after the initial page load; no external tracking or storage hooks.
+- **Export:** Direct high-resolution PNG export.
 
-- Ingresar texto o enlace → genera QR
-- Subir logo (PNG/SVG) → se superpone en el centro del QR
-- Descargar como PNG
-- Funciona offline después de la primera carga
+### Architecture & Runtime
+- **Static Frontend:** Plain HTML5, vanilla CSS3 variables and client-side JavaScript.
+- **Edge Delivery:** Packaged for Cloudflare Workers (`src/index.js`) and Cloudflare Pages (`wrangler.toml`, `_redirects`).
+- **Dependencies:** Uses `qrcodejs` loaded via CDN for raster canvas rendering.
 
-## Deploy en Cloudflare Pages
+### Local Development
+To serve locally using Cloudflare Wrangler:
 
-### Opción 1 — GitHub
+```bash
+npx wrangler dev
+```
 
-1. Crea un repositorio con estos archivos
-2. Cloudflare Dashboard → Workers & Pages → Pages
-3. Conecta tu repositorio de GitHub
-4. Build settings: **None** (proyecto estático)
-5. Deploy
+Alternatively, serve the directory with any static HTTP server:
 
-### Opción 2 — Direct Upload
+```bash
+python -m http.server 8080
+```
 
-1. Cloudflare Dashboard → Workers & Pages → Pages
-2. Create via Direct Upload
-3. Arrastra la carpeta completa
+### Deployment
 
-## Disclaimer Legal
-
-IcarusQR no almacena, transmite ni procesa datos en servidores externos.
-Todo el procesamiento ocurre exclusivamente en el dispositivo del usuario.
+#### Cloudflare Pages
+1. Link your repository in **Cloudflare Dashboard > Workers & Pages > Pages**.
+2. Set Build Command to **None** and Output Directory to root `/` (or deploy via Direct Upload).
+3. Confirm deployment.
 
 ---
 
-&copy; 2026 Tanuki Softworks
-# IcarusQR
+Maintained under [Tanuki Softworks](https://github.com/TanukiSoftworks).
